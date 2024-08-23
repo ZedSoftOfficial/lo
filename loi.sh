@@ -1,15 +1,15 @@
 #!/bin/bash
 
 echo "What should I do?"
-echo "1) 6to4 multi server (1 outside 2 Iran)"
-echo "2) 6to4"
-echo "3) Remove tunnels"
-echo "4) Enable BBR"
-echo "5) Fix Whatsapp Time"
-echo "6) Optimize"
-echo "7) Install x-ui"
-echo "8) Change NameServer"
-echo "9) Disable IPv6 - After server reboot IPv6 is activated"
+echo "1) 6to4"
+echo "2) Remove tunnels"
+echo "3) Enable BBR"
+echo "4) Fix Whatsapp Time"
+echo "5) Optimize"
+echo "6) Install x-ui"
+echo "7) Change NameServer"
+echo "8) Disable IPv6 - After server reboot IPv6 is activated"
+echo "9) 6to4 multi server (1 outside 2 Iran)"
 read -p "Select an option (1-9): " server_choice
 
 setup_rc_local() {
@@ -28,6 +28,48 @@ setup_rc_local() {
 
     eval "$commands"
     echo "Commands executed immediately."
+}
+
+handle_six_to_four() {
+    echo "Handling 6to4 configuration..."
+    # کدهای مربوط به پیکربندی 6to4
+}
+
+remove_tunnels() {
+    echo "Removing tunnels..."
+    # کدهای مربوط به حذف تونل‌ها
+}
+
+enable_bbr() {
+    wget --no-check-certificate -O /opt/bbr.sh https://github.com/teddysun/across/raw/master/bbr.sh
+    chmod 755 /opt/bbr.sh
+    /opt/bbr.sh
+    echo "BBR optimization enabled."
+}
+
+fix_whatsapp_time() {
+    echo "Fixing Whatsapp time..."
+    # کدهای مربوط به تنظیم زمان واتساپ
+}
+
+optimize() {
+    echo "Optimizing system..."
+    # کدهای مربوط به بهینه‌سازی سیستم
+}
+
+install_x_ui() {
+    echo "Installing x-ui..."
+    # کدهای مربوط به نصب x-ui
+}
+
+change_nameserver() {
+    echo "Changing NameServer..."
+    # کدهای مربوط به تغییر NameServer
+}
+
+disable_ipv6() {
+    echo "Disabling IPv6..."
+    # کدهای مربوط به غیرفعال کردن IPv6
 }
 
 handle_six_to_four_multi_server() {
@@ -129,46 +171,33 @@ EOF
     fi
 }
 
-handle_six_to_four() {
-    # کد مربوط به گزینه 6to4 اصلی
-}
-
-remove_tunnels() {
-    # کد مربوط به حذف تونل‌ها
-}
-
-# سایر توابع مرتبط
-
 case $server_choice in
     1)
-        handle_six_to_four_multi_server
-        ;;
-    2)
         handle_six_to_four
         ;;
-    3)
+    2)
         remove_tunnels
         ;;
-    4)
-        wget --no-check-certificate -O /opt/bbr.sh https://github.com/teddysun/across/raw/master/bbr.sh
-        chmod 755 /opt/bbr.sh
-        /opt/bbr.sh
-        echo "BBR optimization enabled."
+    3)
+        enable_bbr
         ;;
-    5)
+    4)
         fix_whatsapp_time
         ;;
-    6)
+    5)
         optimize
         ;;
-    7)
+    6)
         install_x_ui
         ;;
-    8)
+    7)
         change_nameserver
         ;;
-    9)
+    8)
         disable_ipv6
+        ;;
+    9)
+        handle_six_to_four_multi_server
         ;;
     *)
         echo "Invalid option. Please select a number between 1 and 9."
