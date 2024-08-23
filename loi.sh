@@ -52,65 +52,16 @@ handle_six_to_four_multi_outside_iran() {
             read -p "Enter the IP Outside: " ipkharej
             read -p "Enter the IP Iran1: " ipiran1
             read -p "Enter the IP Iran2: " ipiran2
-
-            # Commands for Outside server
-            commands=$(cat <<EOF
-#!/bin/bash
-ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
-ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
-ip link set 6to4_To_IR1 mtu 1480
-ip link set 6to4_To_IR1 up
-
-ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local $ipiran1
-ip addr add 10.10.10.2/30 dev GRE6Tun_To_IR1
-ip link set GRE6Tun_To_IR1 mtu 1436
-ip link set GRE6Tun_To_IR1 up
-
-ip tunnel add 6to4_To_IR2 mode sit remote $ipkharej local $ipiran2
-ip -6 addr add 2009:480:1f10:e1f::2/64 dev 6to4_To_IR2
-ip link set 6to4_To_IR2 mtu 1480
-ip link set 6to4_To_IR2 up
-
-ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local $ipiran2
-ip addr add 10.10.11.2/30 dev GRE6Tun_To_IR2
-ip link set GRE6Tun_To_IR2 mtu 1436
-ip link set GRE6Tun_To_IR2 up
-
-exit 0
-EOF
-)
             ;;
         2)
             read -p "Enter the IP Iran1: " ipiran1
             read -p "Enter the IP Outside: " ipkharej
             read -p "Enter the IP Iran2: " ipiran2
-
-            # Commands for Iran1 and Iran2
-            commands=$(cat <<EOF
-#!/bin/bash
-ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
-ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
-ip link set 6to4_To_IR1 mtu 1480
-ip link set 6to4_To_IR1 up
-
-ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local $ipiran1
-ip addr add 10.10.10.2/30 dev GRE6Tun_To_IR1
-ip link set GRE6Tun_To_IR1 mtu 1436
-ip link set GRE6Tun_To_IR1 up
-
-ip tunnel add 6to4_To_IR2 mode sit remote $ipkharej local $ipiran2
-ip -6 addr add 2009:480:1f10:e1f::2/64 dev 6to4_To_IR2
-ip link set 6to4_To_IR2 mtu 1480
-ip link set 6to4_To_IR2 up
-
-ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local $ipiran2
-ip addr add 10.10.11.2/30 dev GRE6Tun_To_IR2
-ip link set GRE6Tun_To_IR2 mtu 1436
-ip link set GRE6Tun_To_IR2 up
-
-exit 0
-EOF
-)
+            ;;
+        3)
+            read -p "Enter the IP Iran1: " ipiran1
+            read -p "Enter the IP Outside: " ipkharej
+            read -p "Enter the IP Iran2: " ipiran2
             ;;
         *)
             echo "Invalid option. Please select 1, 2, or 3."
@@ -118,10 +69,49 @@ EOF
             ;;
     esac
 
+    read -p "Enter the required ports (e.g., 8080,9090,6060): " ports
+    port_list=$(echo "$ports" | tr ',' ' ')
+
+    # Generate commands based on ports
+    iptables_rules=""
+    for port in $port_list; do
+        iptables_rules+="iptables -t nat -A PREROUTING -p tcp --dport $port -j DNAT --to-destination 10.10.10.1\n"
+    done
+
+    # Commands for Iran1 server
+    commands=$(cat <<EOF
+#!/bin/bash
+# Variables
+ipiran1="$ipiran1"
+ipkharej1="$ipkharej"
+port1="$port_list"
+
+ip tunnel add 6to4_To_KH mode sit remote \$ipkharej1 local \$ipiran1
+ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_KH
+ip link set 6to4_To_KH mtu 1480
+ip link set 6to4_To_KH up
+
+ip -6 tunnel add GRE6Tun_To_KH mode ip6gre remote 2002:480:1f10:e1f::2 local 2002:480:1f10:e1f::1
+ip addr add 10.10.10.1/30 dev GRE6Tun_To_KH
+ip link set GRE6Tun_To_KH mtu 1436
+ip link set GRE6Tun_To_KH up
+
+# Enable IPv4 forwarding
+sysctl net.ipv4.ip_forward=1
+
+# IPTables rules
+$iptables_rules
+
+iptables -t nat -A POSTROUTING -j MASQUERADE
+
+exit 0
+EOF
+)
+
     # Write commands to /etc/rc.local
     echo "$commands" | sudo tee /etc/rc.local > /dev/null
     sudo chmod +x /etc/rc.local
-    echo "Commands for 6to4 multi server have been set."
+    echo "Commands for 6to4 multi server (Iran1) have been set."
 }
 
 # Function to handle Remove Tunnels
