@@ -16,11 +16,11 @@ setup_rc_local() {
     FILE="/etc/rc.local"
     commands="$1"
 
-    # Ensure the file exists and is executable, or empty it if it already exists
+    # Ensure the file exists and is executable, or create it if it does not
     if [ -f "$FILE" ]; then
-        sudo bash -c "echo -e '#! /bin/bash\n\nexit 0' > $FILE"
+        sudo bash -c "echo -e '#!/bin/bash\n\nexit 0' > $FILE"
     else
-        echo -e '#! /bin/bash\n\nexit 0' | sudo tee "$FILE" > /dev/null
+        echo -e '#!/bin/bash\n\nexit 0' | sudo tee "$FILE" > /dev/null
     fi
     sudo chmod +x "$FILE"
 
@@ -55,6 +55,7 @@ handle_six_to_four_multi_outside_iran() {
 
             # Commands for Outside server
             commands=$(cat <<EOF
+#!/bin/bash
 ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
 ip link set 6to4_To_IR1 mtu 1480
@@ -78,12 +79,6 @@ ip link set GRE6Tun_To_IR2 up
 exit 0
 EOF
 )
-
-            # Write commands to /etc/rc.local
-            sudo bash -c "echo '#!/bin/bash' > /etc/rc.local"
-            sudo bash -c "echo '$commands' >> /etc/rc.local"
-            sudo chmod +x /etc/rc.local
-            echo "Commands for 6to4 multi server (1 outside) have been set."
             ;;
         2)
             read -p "Enter the IP Iran1: " ipiran1
@@ -92,6 +87,7 @@ EOF
 
             # Commands for Iran1 and Iran2
             commands=$(cat <<EOF
+#!/bin/bash
 ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
 ip link set 6to4_To_IR1 mtu 1480
@@ -115,17 +111,17 @@ ip link set GRE6Tun_To_IR2 up
 exit 0
 EOF
 )
-
-            # Write commands to /etc/rc.local
-            sudo bash -c "echo '#!/bin/bash' > /etc/rc.local"
-            sudo bash -c "echo '$commands' >> /etc/rc.local"
-            sudo chmod +x /etc/rc.local
-            echo "Commands for 6to4 multi server (1 Iran 2 outside) have been set."
             ;;
         *)
             echo "Invalid option. Please select 1, 2, or 3."
+            return
             ;;
     esac
+
+    # Write commands to /etc/rc.local
+    echo "$commands" | sudo tee /etc/rc.local > /dev/null
+    sudo chmod +x /etc/rc.local
+    echo "Commands for 6to4 multi server have been set."
 }
 
 # Function to handle Remove Tunnels
@@ -141,7 +137,7 @@ remove_tunnels() {
     sudo ip link del GRE6Tun_To_IR2 2>/dev/null
 
     # Clear /etc/rc.local
-    echo -e '#! /bin/bash\n\nexit 0' | sudo tee /etc/rc.local > /dev/null
+    echo -e '#!/bin/bash\n\nexit 0' | sudo tee /etc/rc.local > /dev/null
     echo "Tunnels removed and /etc/rc.local cleared."
 }
 
