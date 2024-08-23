@@ -24,11 +24,11 @@ setup_rc_local() {
     # Remove any existing commands before adding new ones
     sudo sed -i '/^exit 0/d' "$FILE"
 
-    # Add new commands
+    # Add new commands before 'exit 0'
     echo "$commands" | sudo tee -a "$FILE" > /dev/null
 
     # Ensure 'exit 0' is at the end of the file
-    if ! sudo tail -n 1 "$FILE" | grep -q '^exit 0'; then
+    if ! sudo tail -n 1 "$FILE" | grep -q 'exit 0'; then
         echo "exit 0" | sudo tee -a "$FILE" > /dev/null
     fi
 
@@ -130,7 +130,8 @@ EOF
 handle_six_to_four() {
     echo "Choose the type of server:"
     echo "1) Outside"
-    echo "2) Iran"
+    echo "2) Iran1"
+    echo "3) Iran2"
     read -p "Select an option (1 or 2): " six_to_four_choice
 
     if [ "$six_to_four_choice" -eq 1 ]; then
@@ -247,7 +248,7 @@ EOF
         done
 
         commands+="iptables -t nat -A POSTROUTING -j MASQUERADE
-EOF
+exit 0
 "
 
         setup_rc_local "$commands"
@@ -280,7 +281,7 @@ EOF
         done
 
         commands+="iptables -t nat -A POSTROUTING -j MASQUERADE
-EOF
+exit 0
 "
 
         setup_rc_local "$commands"
