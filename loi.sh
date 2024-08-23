@@ -2,8 +2,8 @@
 
 echo "What should I do?"
 echo "1) 6to4 multi server (1 outside 2 Iran)"
-echo "2) Remove tunnels"
-echo "3) 6to4"
+echo "2) 6to4"
+echo "3) Remove tunnels"
 echo "4) Enable BBR"
 echo "5) Fix Whatsapp Time"
 echo "6) Optimize"
@@ -63,7 +63,7 @@ ip addr add 10.10.11.2/30 dev GRE6Tun_To_IR2
 ip link set GRE6Tun_To_IR2 mtu 1436
 ip link set GRE6Tun_To_IR2 up
 EOF
-)
+        )
         setup_rc_local "$commands"
         echo "Configuration for Outside server executed."
 
@@ -86,7 +86,7 @@ ip link set GRE6Tun_To_KH up
 
 sysctl net.ipv4.ip_forward=1
 EOF
-)
+        )
         for i in "${!port_array[@]}"; do
             commands+="\niptables -t nat -A PREROUTING -p tcp --dport ${port_array[$i]} -j DNAT --to-destination 10.10.10.1"
         done
@@ -114,7 +114,7 @@ ip link set GRE6Tun_To_KH up
 
 sysctl net.ipv4.ip_forward=1
 EOF
-)
+        )
         for i in "${!port_array[@]}"; do
             commands+="\niptables -t nat -A PREROUTING -p tcp --dport ${port_array[$i]} -j DNAT --to-destination 10.10.11.1"
         done
@@ -129,30 +129,25 @@ EOF
     fi
 }
 
-# Function to handle other options
 handle_six_to_four() {
-    # Code from the original script for "6to4" option
-    # ...
+    # کد مربوط به گزینه 6to4 اصلی
 }
 
 remove_tunnels() {
-    # Code to remove tunnels from the original script
-    # ...
+    # کد مربوط به حذف تونل‌ها
 }
 
-# The rest of the functions from the original script
-# ...
+# سایر توابع مرتبط
 
-# Execute the selected option
 case $server_choice in
     1)
         handle_six_to_four_multi_server
         ;;
     2)
-        remove_tunnels
+        handle_six_to_four
         ;;
     3)
-        handle_six_to_four
+        remove_tunnels
         ;;
     4)
         wget --no-check-certificate -O /opt/bbr.sh https://github.com/teddysun/across/raw/master/bbr.sh
