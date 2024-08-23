@@ -33,12 +33,6 @@ setup_rc_local() {
     echo "Commands executed immediately."
 }
 
-# Function to handle 6to4 configuration
-handle_six_to_four() {
-    echo "Setting up 6to4..."
-    # Placeholder for 6to4 configuration commands
-}
-
 # Function to handle 6to4 multi-server (1 outside 2 Iran)
 handle_six_to_four_multi_outside_iran() {
     echo "Which server is this?"
@@ -53,6 +47,8 @@ handle_six_to_four_multi_outside_iran() {
             read -p "Enter the IP Outside: " ipkharej1
             read -p "Enter the IP Iran1: " ipiran1
             read -p "Enter the IP Iran2: " ipiran2
+            read -p "Enter the required ports (e.g., 8080,9090,6060): " ports
+            port_list=$(echo "$ports" | tr ',' ' ')
 
             # Generate the commands for outside configuration
             commands=$(cat <<EOF
@@ -90,43 +86,37 @@ EOF
         2|3)
             # Iran1 or Iran2 server configuration
             if [ "$server_role" -eq 2 ]; then
-                ipiran1_prompt="Enter the IP Iran1"
-                ipiran1_var="ipiran1"
-                ipkharej_prompt="Enter the IP Outside"
-                ipkharej_var="ipkharej1"
+                ipiran="ipiran1"
+                ip_remote="ipkharej1"
+                ip_local="2002:480:1f10:e1f::1"
+                ip_gre_local="10.10.10.1"
             else
-                ipiran1_prompt="Enter the IP Iran2"
-                ipiran1_var="ipiran2"
-                ipkharej_prompt="Enter the IP Outside"
-                ipkharej_var="ipkharej1"
+                ipiran="ipiran2"
+                ip_remote="ipkharej1"
+                ip_local="2009:480:1f10:e1f::1"
+                ip_gre_local="10.10.11.1"
             fi
 
-            read -p "$ipiran1_prompt: " ipiran1
-            read -p "$ipkharej_prompt: " ipkharej1
+            read -p "Enter the IP $ipiran: " ipiran_value
+            read -p "Enter the IP Outside: " ipkharej1
             read -p "Enter the IP Iran2: " ipiran2
             read -p "Enter the required ports (e.g., 8080,9090,6060): " ports
             port_list=$(echo "$ports" | tr ',' ' ')
 
-            # Generate commands based on ports
-            iptables_rules=""
-            for port in $port_list; do
-                iptables_rules+="iptables -t nat -A PREROUTING -p tcp --dport $port -j DNAT --to-destination 10.10.10.1\n"
-            done
-
-            # Commands for Iran1 or Iran2 server
+            # Generate commands for Iran1 or Iran2 configuration
             commands=$(cat <<EOF
 #!/bin/bash
 # Variables
-ipiran1="$ipiran1"
+ipiran="$ipiran_value"
 ipkharej1="$ipkharej1"
 port_list="$port_list"
 
-ip tunnel add 6to4_To_KH mode sit remote \$ipkharej1 local \$ipiran1
-ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_KH
+ip tunnel add 6to4_To_KH mode sit remote \$ipkharej1 local \$ipiran
+ip -6 addr add $ip_local/64 dev 6to4_To_KH
 ip link set 6to4_To_KH mtu 1480
 ip link set 6to4_To_KH up
 
-ip -6 tunnel add GRE6Tun_To_KH mode ip6gre remote 2002:480:1f10:e1f::2 local 2002:480:1f10:e1f::1
+ip -6 tunnel add GRE6Tun_To_KH mode ip6gre remote $ip_local local $ip_gre_local
 ip addr add 10.10.10.1/30 dev GRE6Tun_To_KH
 ip link set GRE6Tun_To_KH mtu 1436
 ip link set GRE6Tun_To_KH up
@@ -135,8 +125,13 @@ ip link set GRE6Tun_To_KH up
 sysctl net.ipv4.ip_forward=1
 
 # IPTables rules
-$iptables_rules
+EOF
+)
+            for port in $port_list; do
+                commands+=$(printf "iptables -t nat -A PREROUTING -p tcp --dport %s -j DNAT --to-destination 10.10.10.1\n" "$port")
+            done
 
+            commands+=$(cat <<EOF
 iptables -t nat -A POSTROUTING -j MASQUERADE
 
 exit 0
@@ -144,7 +139,7 @@ EOF
 )
             echo "$commands" | sudo tee /etc/rc.local > /dev/null
             sudo chmod +x /etc/rc.local
-            echo "Commands for 6to4 multi server ($ipiran1) have been set."
+            echo "Commands for 6to4 multi server ($ipiran_value) have been set."
             ;;
         *)
             echo "Invalid option. Please select 1, 2, or 3."
