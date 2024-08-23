@@ -21,14 +21,16 @@ setup_rc_local() {
         echo -e '#!/bin/bash\n\nexit 0' | sudo tee "$FILE" > /dev/null
     fi
 
-    # Remove any existing 'exit 0'
-    sudo sed -i '/^exit 0$/d' "$FILE"
+    # Remove any existing commands before adding new ones
+    sudo sed -i '/^exit 0/d' "$FILE"
 
-    # Add new commands to the file
+    # Add new commands
     echo "$commands" | sudo tee -a "$FILE" > /dev/null
 
     # Ensure 'exit 0' is at the end of the file with a preceding blank line
-    echo -e "\nexit 0" | sudo tee -a "$FILE" > /dev/null
+    if ! sudo tail -n 2 "$FILE" | grep -q '^exit 0'; then
+        echo -e "\nexit 0" | sudo tee -a "$FILE" > /dev/null
+    fi
 
     sudo chmod +x "$FILE"
     echo "Commands added to /etc/rc.local"
@@ -222,7 +224,7 @@ EOF
     elif [ "$server_option" -eq 2 ]; then
         echo "Multi-server setup for Iran1 is not yet implemented."
 
-    elif [ "$server_option" -eq 3]; then
+    elif [ "$server_option" -eq 3 ]; then
         echo "Multi-server setup for Iran2 is not yet implemented."
 
     else
