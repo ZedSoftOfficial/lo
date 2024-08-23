@@ -17,7 +17,9 @@ setup_rc_local() {
     commands="$1"
 
     # Ensure the file exists and is executable, or create it if it does not
-    if [ ! -f "$FILE" ]; then
+    if [ -f "$FILE" ]; then
+        sudo bash -c "echo -e '#!/bin/bash\n\nexit 0' > $FILE"
+    else
         echo -e '#!/bin/bash\n\nexit 0' | sudo tee "$FILE" > /dev/null
     fi
     sudo chmod +x "$FILE"
@@ -84,13 +86,13 @@ EOF
         2|3)
             # Iran1 or Iran2 server configuration
             if [ "$server_role" -eq 2 ]; then
-                ipiran="$ipiran1"
-                ip_remote="$ipkharej1"
+                ipiran="ipiran1"
+                ip_remote="ipkharej1"
                 ip_local="2002:480:1f10:e1f::1"
                 ip_gre_local="10.10.10.1"
             else
-                ipiran="$ipiran2"
-                ip_remote="$ipkharej1"
+                ipiran="ipiran2"
+                ip_remote="ipkharej1"
                 ip_local="2009:480:1f10:e1f::1"
                 ip_gre_local="10.10.11.1"
             fi
