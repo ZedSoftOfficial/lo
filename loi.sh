@@ -55,26 +55,22 @@ handle_six_to_four_multi_outside_iran() {
 
             # Commands for Outside server
             commands=$(cat <<EOF
-#!/bin/bash
-
-# تنظیمات تونل برای اولین سرور ایران
 ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
 ip link set 6to4_To_IR1 mtu 1480
 ip link set 6to4_To_IR1 up
 
-ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local 2002:480:1f10:e1f::2
+ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local $ipiran1
 ip addr add 10.10.10.2/30 dev GRE6Tun_To_IR1
 ip link set GRE6Tun_To_IR1 mtu 1436
 ip link set GRE6Tun_To_IR1 up
 
-# تنظیمات تونل برای دومین سرور ایران
 ip tunnel add 6to4_To_IR2 mode sit remote $ipkharej local $ipiran2
 ip -6 addr add 2009:480:1f10:e1f::2/64 dev 6to4_To_IR2
 ip link set 6to4_To_IR2 mtu 1480
 ip link set 6to4_To_IR2 up
 
-ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local 2009:480:1f10:e1f::2
+ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local $ipiran2
 ip addr add 10.10.11.2/30 dev GRE6Tun_To_IR2
 ip link set GRE6Tun_To_IR2 mtu 1436
 ip link set GRE6Tun_To_IR2 up
@@ -87,7 +83,7 @@ EOF
             sudo bash -c "echo '#!/bin/bash' > /etc/rc.local"
             sudo bash -c "echo '$commands' >> /etc/rc.local"
             sudo chmod +x /etc/rc.local
-            echo "Commands for 6to4 multi server (1 outside 2 Iran) have been set."
+            echo "Commands for 6to4 multi server (1 outside) have been set."
             ;;
         2)
             read -p "Enter the IP Iran1: " ipiran1
@@ -96,26 +92,22 @@ EOF
 
             # Commands for Iran1 and Iran2
             commands=$(cat <<EOF
-#!/bin/bash
-
-# تنظیمات تونل برای اولین سرور ایران
 ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej local $ipiran1
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
 ip link set 6to4_To_IR1 mtu 1480
 ip link set 6to4_To_IR1 up
 
-ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local 2002:480:1f10:e1f::2
+ip -6 tunnel add GRE6Tun_To_IR1 mode ip6gre remote 2002:480:1f10:e1f::1 local $ipiran1
 ip addr add 10.10.10.2/30 dev GRE6Tun_To_IR1
 ip link set GRE6Tun_To_IR1 mtu 1436
 ip link set GRE6Tun_To_IR1 up
 
-# تنظیمات تونل برای دومین سرور ایران
 ip tunnel add 6to4_To_IR2 mode sit remote $ipkharej local $ipiran2
 ip -6 addr add 2009:480:1f10:e1f::2/64 dev 6to4_To_IR2
 ip link set 6to4_To_IR2 mtu 1480
 ip link set 6to4_To_IR2 up
 
-ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local 2009:480:1f10:e1f::2
+ip -6 tunnel add GRE6Tun_To_IR2 mode ip6gre remote 2009:480:1f10:e1f::1 local $ipiran2
 ip addr add 10.10.11.2/30 dev GRE6Tun_To_IR2
 ip link set GRE6Tun_To_IR2 mtu 1436
 ip link set GRE6Tun_To_IR2 up
@@ -147,7 +139,10 @@ remove_tunnels() {
     sudo ip link del GRE6Tun_To_IR1 2>/dev/null
     sudo ip link del 6to4_To_IR2 2>/dev/null
     sudo ip link del GRE6Tun_To_IR2 2>/dev/null
-    echo "Tunnels removed."
+
+    # Clear /etc/rc.local
+    echo -e '#! /bin/bash\n\nexit 0' | sudo tee /etc/rc.local > /dev/null
+    echo "Tunnels removed and /etc/rc.local cleared."
 }
 
 # Function to handle Enable BBR
