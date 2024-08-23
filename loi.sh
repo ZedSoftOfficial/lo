@@ -59,7 +59,7 @@ handle_six_to_four_multi_outside_iran() {
 #!/bin/bash
 
 # تنظیمات تونل برای اولین سرور ایران
-ip tunnel add 6to4_To_IR1 mode sit remote \$ipkharej1 local \$ipiran1
+ip tunnel add 6to4_To_IR1 mode sit remote $ipkharej1 local $ipiran1
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR1
 ip link set 6to4_To_IR1 mtu 1480
 ip link set 6to4_To_IR1 up
@@ -70,7 +70,7 @@ ip link set GRE6Tun_To_IR1 mtu 1436
 ip link set GRE6Tun_To_IR1 up
 
 # تنظیمات تونل برای دومین سرور ایران
-ip tunnel add 6to4_To_IR2 mode sit remote \$ipkharej1 local \$ipiran2
+ip tunnel add 6to4_To_IR2 mode sit remote $ipkharej1 local $ipiran2
 ip -6 addr add 2009:480:1f10:e1f::2/64 dev 6to4_To_IR2
 ip link set 6to4_To_IR2 mtu 1480
 ip link set 6to4_To_IR2 up
@@ -98,7 +98,7 @@ EOF
                 ipiran1_prompt="Enter the IP Iran2"
                 ipiran1_var="ipiran2"
                 ipkharej_prompt="Enter the IP Outside"
-                ipkharej_var="ipkharej2"
+                ipkharej_var="ipkharej1"
             fi
 
             read -p "$ipiran1_prompt: " ipiran1
@@ -119,7 +119,7 @@ EOF
 # Variables
 ipiran1="$ipiran1"
 ipkharej1="$ipkharej1"
-port1="$port_list"
+port_list="$port_list"
 
 ip tunnel add 6to4_To_KH mode sit remote \$ipkharej1 local \$ipiran1
 ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_KH
