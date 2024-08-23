@@ -16,7 +16,7 @@ setup_rc_local() {
     FILE="/etc/rc.local"
     commands="$1"
 
-    # Ensure the file exists and is executable, or empty it if it already exists
+    # Ensure the file exists and is executable, or create and set it to exit 0
     if [ -f "$FILE" ]; then
         sudo bash -c "echo -e '#!/bin/bash\n\nexit 0' > $FILE"
     else
@@ -24,13 +24,11 @@ setup_rc_local() {
     fi
     sudo chmod +x "$FILE"
 
-    # Add new commands above 'exit 0' if they are not already present
-    existing_commands=$(sudo grep -E -v '^#!/bin/bash|^exit 0' "$FILE")
-    if [ -z "$existing_commands" ]; then
-        sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
-    else
-        sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
-    fi
+    # Remove any existing commands before adding new ones
+    sudo sed -i '/^exit 0/d' "$FILE"
+
+    # Add new commands before 'exit 0'
+    echo "$commands" | sudo tee -a "$FILE" > /dev/null
     echo "Commands added to /etc/rc.local"
 
     # Execute the commands immediately
