@@ -1,8 +1,7 @@
-
 #!/bin/bash
 
 echo "What should I do?"
-echo "1) 6to4"
+echo "1) 6to4 multi server (1 outside 2 Iran)"
 echo "2) Remove tunnels"
 echo "3) Enable BBR"
 echo "4) Fix Whatsapp Time"
@@ -16,7 +15,7 @@ setup_rc_local() {
     FILE="/etc/rc.local"
     commands="$1"
 
-    # Ensure the file exists and is executable, or empty it if it already exists
+    # Ensure the file exists and is executable, or create it if it does not
     if [ -f "$FILE" ]; then
         sudo bash -c "echo -e '#! /bin/bash\n\nexit 0' > $FILE"
     else
@@ -25,11 +24,11 @@ setup_rc_local() {
     sudo chmod +x "$FILE"
 
     # Add new commands above 'exit 0'
-    sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
+    echo "$commands" | sudo tee -a "$FILE" > /dev/null
     echo "Commands added to /etc/rc.local"
 
     # Execute the commands immediately
-    eval "$commands"
+    echo "$commands" | bash
     echo "Commands executed immediately."
 }
 
@@ -57,7 +56,7 @@ optimize() {
 
         if [ -f "$file" ]; then
             cp "$file" "$temp_file"
-            if ! grep -q "$line" "$file"; then
+            if ! grep -q "$line" "$temp_file"; then
                 sed -i '/^\[Manager\]/a '"$line" "$temp_file"
                 sudo mv "$temp_file" "$file"
                 echo "Added '$line' to $file"
@@ -109,15 +108,19 @@ install_x_ui() {
     echo "2) MHSanaei"
     read -p "Select an option (1 or 2): " xui_choice
 
-    if [ "$xui_choice" -eq 1 ]; then
-        bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
-        echo "alireza version of x-ui installed."
-    elif [ "$xui_choice" -eq 2 ]; then
-        bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
-        echo "MHSanaei version of x-ui installed."
-    else
-        echo "Invalid option. Please select 1 or 2."
-    fi
+    case $xui_choice in
+        1)
+            bash <(curl -Ls https://raw.githubusercontent.com/alireza0/x-ui/master/install.sh)
+            echo "alireza version of x-ui installed."
+            ;;
+        2)
+            bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
+            echo "MHSanaei version of x-ui installed."
+            ;;
+        *)
+            echo "Invalid option. Please select 1 or 2."
+            ;;
+    esac
 }
 
 # Function to disable IPv6
@@ -140,11 +143,12 @@ handle_six_to_four() {
     echo "2) Iran"
     read -p "Select an option (1 or 2): " six_to_four_choice
 
-    if [ "$six_to_four_choice" -eq 1 ]; then
-        read -p "Enter the IP outside: " ipkharej
-        read -p "Enter the IP Iran: " ipiran
+    case $six_to_four_choice in
+        1)
+            read -p "Enter the IP outside: " ipkharej
+            read -p "Enter the IP Iran: " ipiran
 
-        commands=$(cat <<EOF
+            commands=$(cat <<EOF
 ip tunnel add 6to4_To_IR mode sit remote $ipiran local $ipkharej
 ip -6 addr add 2002:480:1f10:e1f::2/64 dev 6to4_To_IR
 ip link set 6to4_To_IR mtu 1480
@@ -157,14 +161,15 @@ ip link set GRE6Tun_To_IR up
 EOF
 )
 
-        setup_rc_local "$commands"
-        echo "Commands executed for the outside server."
+            setup_rc_local "$commands"
+            echo "Commands executed for the outside server."
 
-    elif [ "$six_to_four_choice" -eq 2 ]; then
-        read -p "Enter the IP Iran: " ipiran
-        read -p "Enter the IP outside: " ipkharej
+            ;;
+        2)
+            read -p "Enter the IP Iran: " ipiran
+            read -p "Enter the IP outside: " ipkharej
 
-        commands=$(cat <<EOF
+            commands=$(cat <<EOF
 ip tunnel add 6to4_To_KH mode sit remote $ipkharej local $ipiran
 ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_KH
 ip link set 6to4_To_KH mtu 1480
@@ -182,12 +187,14 @@ iptables -t nat -A POSTROUTING -j MASQUERADE
 EOF
 )
 
-        setup_rc_local "$commands"
-        echo "Commands executed for the Iran server."
+            setup_rc_local "$commands"
+            echo "Commands executed for the Iran server."
 
-    else
-        echo "Invalid option. Please select 1 or 2."
-    fi
+            ;;
+        *)
+            echo "Invalid option. Please select 1 or 2."
+            ;;
+    esac
 }
 
 # Function to change NameServer
