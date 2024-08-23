@@ -24,8 +24,13 @@ setup_rc_local() {
     fi
     sudo chmod +x "$FILE"
 
-    # Add new commands above 'exit 0'
-    sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
+    # Add new commands above 'exit 0' if they are not already present
+    existing_commands=$(sudo grep -E -v '^#!/bin/bash|^exit 0' "$FILE")
+    if [ -z "$existing_commands" ]; then
+        sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
+    else
+        sudo bash -c "sed -i '/exit 0/i $commands' $FILE"
+    fi
     echo "Commands added to /etc/rc.local"
 
     # Execute the commands immediately
@@ -125,7 +130,8 @@ EOF
 handle_six_to_four() {
     echo "Choose the type of server:"
     echo "1) Outside"
-    echo "2) Iran"
+    echo "2) Iran1"
+    echo "3) Iran2"
     read -p "Select an option (1 or 2): " six_to_four_choice
 
     if [ "$six_to_four_choice" -eq 1 ]; then
@@ -222,15 +228,15 @@ EOF
         IFS=',' read -r -a port_array <<< "$ports"
 
         commands=$(cat <<EOF
-ip tunnel add 6to4_To_KH mode sit remote $ipkharej1 local $ipiran1
-ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_KH
-ip link set 6to4_To_KH mtu 1480
-ip link set 6to4_To_KH up
+ip tunnel add 6to4_To_IR mode sit remote $ipkharej1 local $ipiran1
+ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_IR
+ip link set 6to4_To_IR mtu 1480
+ip link set 6to4_To_IR up
 
-ip -6 tunnel add GRE6Tun_To_KH mode ip6gre remote 2002:480:1f10:e1f::2 local 2002:480:1f10:e1f::1
-ip addr add 10.10.10.1/30 dev GRE6Tun_To_KH
-ip link set GRE6Tun_To_KH mtu 1436
-ip link set GRE6Tun_To_KH up
+ip -6 tunnel add GRE6Tun_To_IR mode ip6gre remote 2002:480:1f10:e1f::2 local 2002:480:1f10:e1f::1
+ip addr add 10.10.10.1/30 dev GRE6Tun_To_IR
+ip link set GRE6Tun_To_IR mtu 1436
+ip link set GRE6Tun_To_IR up
 
 sysctl net.ipv4.ip_forward=1
 EOF
