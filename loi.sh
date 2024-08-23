@@ -27,9 +27,9 @@ setup_rc_local() {
     # Add new commands
     echo "$commands" | sudo tee -a "$FILE" > /dev/null
 
-    # Ensure 'exit 0' is at the end of the file with a preceding blank line
-    if ! sudo tail -n 2 "$FILE" | grep -q '^exit 0'; then
-        echo -e "\nexit 0" | sudo tee -a "$FILE" > /dev/null
+    # Ensure 'exit 0' is at the end of the file
+    if ! sudo tail -n 1 "$FILE" | grep -q '^exit 0'; then
+        echo "exit 0" | sudo tee -a "$FILE" > /dev/null
     fi
 
     sudo chmod +x "$FILE"
@@ -130,8 +130,7 @@ EOF
 handle_six_to_four() {
     echo "Choose the type of server:"
     echo "1) Outside"
-    echo "2) Iran1"
-    echo "3) Iran2"
+    echo "2) Iran"
     read -p "Select an option (1 or 2): " six_to_four_choice
 
     if [ "$six_to_four_choice" -eq 1 ]; then
@@ -219,55 +218,110 @@ EOF
 )
 
         setup_rc_local "$commands"
-        echo "Commands executed for multi-server setup."
+        echo "Configuration for Outside saved to /etc/rc.local and the file has been made executable."
 
     elif [ "$server_option" -eq 2 ]; then
-        echo "Multi-server setup for Iran1 is not yet implemented."
+        read -p "Enter the IP Outside: " ipkharej1
+        read -p "Enter the IP Iran1: " ipiran1
+        read -p "Enter the ports (comma separated, e.g., 443,8080): " ports
+        IFS=',' read -r -a port_array <<< "$ports"
+
+        commands=$(cat <<EOF
+ip tunnel add 6to4_To_IR mode sit remote $ipkharej1 local $ipiran1
+ip -6 addr add 2002:480:1f10:e1f::1/64 dev 6to4_To_IR
+ip link set 6to4_To_IR mtu 1480
+ip link set 6to4_To_IR up
+
+ip -6 tunnel add GRE6Tun_To_IR mode ip6gre remote 2002:480:1f10:e1f::2 local 2002:480:1f10:e1f::1
+ip addr add 10.10.10.1/30 dev GRE6Tun_To_IR
+ip link set GRE6Tun_To_IR mtu 1436
+ip link set GRE6Tun_To_IR up
+
+sysctl net.ipv4.ip_forward=1
+EOF
+)
+
+        for i in "${!port_array[@]}"; do
+            commands+="iptables -t nat -A PREROUTING -p tcp --dport ${port_array[$i]} -j DNAT --to-destination 10.10.10.1
+"
+        done
+
+        commands+="iptables -t nat -A POSTROUTING -j MASQUERADE
+EOF
+"
+
+        setup_rc_local "$commands"
+        echo "Configuration for Iran1 saved to /etc/rc.local and the file has been made executable."
 
     elif [ "$server_option" -eq 3 ]; then
-        echo "Multi-server setup for Iran2 is not yet implemented."
+        read -p "Enter the IP Outside: " ipkharej1
+        read -p "Enter the IP Iran2: " ipiran2
+        read -p "Enter the ports (comma separated, e.g., 443,8080): " ports
+        IFS=',' read -r -a port_array <<< "$ports"
+
+        commands=$(cat <<EOF
+ip tunnel add 6to4_To_KH mode sit remote $ipkharej1 local $ipiran2
+ip -6 addr add 2009:480:1f10:e1f::1/64 dev 6to4_To_KH
+ip link set 6to4_To_KH mtu 1480
+ip link set 6to4_To_KH up
+
+ip -6 tunnel add GRE6Tun_To_KH mode ip6gre remote 2009:480:1f10:e1f::2 local 2009:480:1f10:e1f::1
+ip addr add 10.10.11.1/30 dev GRE6Tun_To_KH
+ip link set GRE6Tun_To_KH mtu 1436
+ip link set GRE6Tun_To_KH up
+
+sysctl net.ipv4.ip_forward=1
+EOF
+)
+
+        for i in "${!port_array[@]}"; do
+            commands+="iptables -t nat -A PREROUTING -p tcp --dport ${port_array[$i]} -j DNAT --to-destination 10.10.11.1
+"
+        done
+
+        commands+="iptables -t nat -A POSTROUTING -j MASQUERADE
+EOF
+"
+
+        setup_rc_local "$commands"
+        echo "Configuration for Iran2 saved to /etc/rc.local and the file has been made executable."
 
     else
-        echo "Invalid option. Please select 1, 2, or 3."
+        echo "Invalid server option selected. Exiting."
+        exit 1
     fi
 }
 
 remove_tunnels() {
-    commands=$(cat <<EOF
-ip tunnel del 6to4_To_IR1
-ip tunnel del GRE6Tun_To_IR1
-ip tunnel del 6to4_To_IR2
-ip tunnel del GRE6Tun_To_IR2
-EOF
-)
+    echo "Removing tunnels..."
+    sudo ip tunnel del 6to4_To_IR1
+    sudo ip tunnel del GRE6Tun_To_IR1
+    sudo ip tunnel del 6to4_To_IR2
+    sudo ip tunnel del GRE6Tun_To_IR2
+    sudo ip tunnel del 6to4_To_KH
+    sudo ip tunnel del GRE6Tun_To_KH
 
-    setup_rc_local "$commands"
-    echo "Tunnels removed."
+    # Clear the /etc/rc.local file and set it to only exit 0
+    echo -e '#!/bin/bash\n\nexit 0' | sudo tee /etc/rc.local > /dev/null
+
+    echo "Tunnels removed and /etc/rc.local has been cleared and set to exit 0."
 }
 
 enable_bbr() {
-    commands=$(cat <<EOF
-echo "net.core.default_qdisc = fq" >> /etc/sysctl.conf
-echo "net.ipv4.tcp_congestion_control = bbr" >> /etc/sysctl.conf
-sysctl -p
-EOF
-)
-
-    setup_rc_local "$commands"
+    echo "Enabling BBR..."
+    sudo bash -c 'echo "net.core.default_qdisc=fq" >> /etc/sysctl.conf'
+    sudo bash -c 'echo "net.ipv4.tcp_congestion_control=bbr" >> /etc/sysctl.conf'
+    sudo sysctl -p
     echo "BBR enabled."
 }
 
 change_nameserver() {
-    commands=$(cat <<EOF
-sed -i 's/^nameserver.*/nameserver 1.1.1.1/' /etc/resolv.conf
-EOF
-)
-
-    setup_rc_local "$commands"
-    echo "Nameserver changed to 1.1.1.1."
+    echo "Changing NameServer..."
+    sudo bash -c 'echo "nameserver 8.8.8.8" > /etc/resolv.conf'
+    echo "NameServer changed to 8.8.8.8."
 }
 
-case "$server_choice" in
+case $server_choice in
     1)
         handle_six_to_four
         ;;
@@ -296,6 +350,6 @@ case "$server_choice" in
         disable_ipv6
         ;;
     *)
-        echo "Invalid option. Please select a number between 1 and 9."
+        echo "Invalid option. Please select 1, 2, 3, 4, 5, 6, 7, 8, or 9."
         ;;
 esac
