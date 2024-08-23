@@ -49,18 +49,16 @@ handle_six_to_four_multi_outside_iran() {
 
     case $server_role in
         1)
-            read -p "Enter the IP Outside: " ipkharej
-            read -p "Enter the IP Iran1: " ipiran1
-            read -p "Enter the IP Iran2: " ipiran2
+            echo "You selected Outside. This option should be configured separately."
             ;;
         2)
             read -p "Enter the IP Iran1: " ipiran1
-            read -p "Enter the IP Outside: " ipkharej
+            read -p "Enter the IP Outside: " ipkharej1
             read -p "Enter the IP Iran2: " ipiran2
             ;;
         3)
             read -p "Enter the IP Iran1: " ipiran1
-            read -p "Enter the IP Outside: " ipkharej
+            read -p "Enter the IP Outside: " ipkharej1
             read -p "Enter the IP Iran2: " ipiran2
             ;;
         *)
@@ -83,7 +81,7 @@ handle_six_to_four_multi_outside_iran() {
 #!/bin/bash
 # Variables
 ipiran1="$ipiran1"
-ipkharej1="$ipkharej"
+ipkharej1="$ipkharej1"
 port1="$port_list"
 
 ip tunnel add 6to4_To_KH mode sit remote \$ipkharej1 local \$ipiran1
