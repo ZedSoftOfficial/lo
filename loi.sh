@@ -130,8 +130,7 @@ EOF
 handle_six_to_four() {
     echo "Choose the type of server:"
     echo "1) Outside"
-    echo "2) Iran1"
-    echo "3) Iran2"
+    echo "2) Iran"
     read -p "Select an option (1 or 2): " six_to_four_choice
 
     if [ "$six_to_four_choice" -eq 1 ]; then
