@@ -17,23 +17,25 @@ setup_rc_local() {
     commands="$1"
 
     # Ensure the file exists and is executable, or create and set it to exit 0
-    if [ -f "$FILE" ]; then
-        sudo bash -c "echo -e '#!/bin/bash\n\nexit 0' > $FILE"
-    else
+    if [ ! -f "$FILE" ]; then
         echo -e '#!/bin/bash\n\nexit 0' | sudo tee "$FILE" > /dev/null
     fi
-    sudo chmod +x "$FILE"
 
     # Remove any existing commands before adding new ones
     sudo sed -i '/^exit 0/d' "$FILE"
 
     # Add new commands before 'exit 0'
     echo "$commands" | sudo tee -a "$FILE" > /dev/null
-    echo "Commands added to /etc/rc.local"
 
-    # Execute the commands immediately
-    eval "$commands"
+    # Ensure 'exit 0' is at the end of the file
+    if ! sudo tail -n 1 "$FILE" | grep -q 'exit 0'; then
+        echo "exit 0" | sudo tee -a "$FILE" > /dev/null
+    fi
+
+    sudo chmod +x "$FILE"
+    echo "Commands added to /etc/rc.local"
     echo "Commands executed immediately."
+    eval "$commands"
 }
 
 fix_whatsapp_time() {
