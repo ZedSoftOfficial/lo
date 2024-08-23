@@ -2,14 +2,14 @@
 
 echo "What should I do?"
 echo "1) 6to4"
-echo "2) Remove tunnels"
-echo "3) Enable BBR"
-echo "4) Fix Whatsapp Time"
-echo "5) Optimize"
-echo "6) Install x-ui"
-echo "7) Change NameServer"
-echo "8) Disable IPv6 - After server reboot IPv6 is activated"
-echo "9) 6to4 multi server (1 Outside 2 Iran)"
+echo "2) 6to4 multi server (1 Outside 2 Iran)"
+echo "3) Remove tunnels"
+echo "4) Enable BBR"
+echo "5) Fix Whatsapp Time"
+echo "6) Optimize"
+echo "7) Install x-ui"
+echo "8) Change NameServer"
+echo "9) Disable IPv6 - After server reboot IPv6 is activated"
 read -p "Select an option (1, 2, 3, 4, 5, 6, 7, 8, or 9): " server_choice
 
 setup_rc_local() {
@@ -326,28 +326,28 @@ case $server_choice in
         handle_six_to_four
         ;;
     2)
-        remove_tunnels
+        handle_six_to_four_multi_server
         ;;
     3)
-        enable_bbr
+        remove_tunnels
         ;;
     4)
-        fix_whatsapp_time
+        enable_bbr
         ;;
     5)
-        optimize
+        fix_whatsapp_time
         ;;
     6)
-        install_x_ui
+        optimize
         ;;
     7)
-        change_nameserver
+        install_x_ui
         ;;
     8)
-        disable_ipv6
+        change_nameserver
         ;;
     9)
-        handle_six_to_four_multi_server
+        disable_ipv6
         ;;
     *)
         echo "Invalid option. Please select 1, 2, 3, 4, 5, 6, 7, 8, or 9."
